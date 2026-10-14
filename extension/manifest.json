@@ -1,0 +1,8 @@
+{
+  "manifest_version": 3,
+  "name": "ghworker",
+  "version": "0.1.0",
+  "description": "Sends unresolvable `t/repo#123`-style addresses to ghworker instead of showing a DNS error.",
+  "permissions": ["webNavigation"],
+  "background": { "service_worker": "background.js" }
+}

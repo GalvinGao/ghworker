@@ -41,13 +41,10 @@ pnpm run deploy                              # 部署（首次需要先 pnpm exe
 
 ### macOS Chrome
 
-设置 → 搜索引擎 → 管理搜索引擎和网站搜索 → 网站搜索旁边点“添加”：
+1. 设置 → 搜索引擎 → 管理搜索引擎和网站搜索 → 网站搜索旁边点“添加”，网址填 `https://<worker 地址>/?q=%s`，然后在它的菜单里选“设为默认”。这一步让 `repo#123` 这类输入生效。
+2. 装上 `extension/` 里的扩展：打开 `chrome://extensions` → 右上角打开“开发者模式” → “加载已解压的扩展程序” → 选 `extension` 目录。
 
-- 网址：`https://ghworker.<你的子域>.workers.dev/?q=%s`
-
-添加后在它的菜单里选“设为默认”。
-
-注意：不要直接访问 `http://<org>/...` 这样的地址。Chrome 记住这个主机名后，再输入 `org/repo` 会被当成网址打开，不再走搜索。
+第 2 步是必须的：Chrome 会把 `t/repo` 这种“一个词 + 斜杠”的输入当成内网网址（`http://t/repo`）直接打开，而不是去搜索。扩展只在这种主机名解析失败时，才把整串输入转给 Worker，所以真正存在的内网或 tailnet 主机不受影响。用自己部署的 Worker 时，记得改 `extension/background.js` 里的 `ENDPOINT`。
 
 ### iOS Safari
 
