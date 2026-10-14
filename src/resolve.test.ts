@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { configFromVars, resolve } from "./resolve";
 
-const cfg = configFromVars({ DEFAULT_ORG: "acme", ORGS: "Rust-Lang, acme" });
+const cfg = configFromVars({ DEFAULT_ORG: "acme", ORGS: "Rust-Lang, a = acme" });
 const r = (q: string) => resolve(q, cfg);
 const google = (q: string) => `https://www.google.com/search?q=${q}`;
 
@@ -11,6 +11,12 @@ describe("resolve", () => {
     expect(r("  ACME/widgets ")).toBe("https://github.com/acme/widgets");
     expect(r("rust-lang/rust")).toBe("https://github.com/Rust-Lang/rust");
     expect(r("acme/my.repo_2-x")).toBe("https://github.com/acme/my.repo_2-x");
+  });
+
+  it("expands org aliases", () => {
+    expect(r("a/widgets")).toBe("https://github.com/acme/widgets");
+    expect(r("A/widgets#5")).toBe("https://github.com/acme/widgets/issues/5");
+    expect(r("a/widgets/actions")).toBe("https://github.com/acme/widgets/actions");
   });
 
   it("keeps repo subpaths", () => {
@@ -52,9 +58,17 @@ describe("configFromVars", () => {
     expect(() => configFromVars({ DEFAULT_ORG: " " })).toThrow();
   });
 
+  it("skips malformed ORGS entries", () => {
+    const c = configFromVars({ DEFAULT_ORG: "acme", ORGS: " , =x, y=, Foo " });
+    expect([...c.orgs]).toEqual([
+      ["acme", "acme"],
+      ["foo", "Foo"],
+    ]);
+  });
+
   it("applies defaults and custom fallback", () => {
     const c = configFromVars({ DEFAULT_ORG: "acme", FALLBACK: "https://duckduckgo.com/?q={q}" });
-    expect(c.orgs).toEqual(["acme"]);
+    expect([...c.orgs]).toEqual([["acme", "acme"]]);
     expect(resolve("hi there", c)).toBe("https://duckduckgo.com/?q=hi+there");
   });
 });

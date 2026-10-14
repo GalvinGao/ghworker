@@ -3,8 +3,8 @@
 export interface Config {
   /** Org used for bare `repo#123`. */
   defaultOrg: string;
-  /** Orgs recognised in `org/repo`. Always contains `defaultOrg`. */
-  orgs: string[];
+  /** Lowercased org name or alias → org as used in GitHub URLs. Always contains `defaultOrg`. */
+  orgs: Map<string, string>;
   /** Search URL used when nothing matches; `{q}` is replaced by the encoded query. */
   fallback: string;
 }
@@ -25,11 +25,14 @@ const TARGET = /^(?:([^/]+)\/)?([^/]+)(?:\/(.*))?$/;
 export function configFromVars(vars: Vars): Config {
   const defaultOrg = vars.DEFAULT_ORG?.trim();
   if (!defaultOrg) throw new Error("DEFAULT_ORG is not set");
-  const orgs = (vars.ORGS ?? "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-  if (!orgs.some((o) => sameOrg(o, defaultOrg))) orgs.push(defaultOrg);
+  const orgs = new Map([[defaultOrg.toLowerCase(), defaultOrg]]);
+  // ORGS entries are `org` or `alias=org`; both the alias and the org itself are recognised.
+  for (const entry of (vars.ORGS ?? "").split(",")) {
+    const [alias, org = alias] = entry.split("=", 2).map((s) => s.trim());
+    if (!alias || !org) continue;
+    orgs.set(org.toLowerCase(), org);
+    orgs.set(alias.toLowerCase(), org);
+  }
   const fallback = vars.FALLBACK?.includes("{q}") ? vars.FALLBACK : DEFAULT_FALLBACK;
   return { defaultOrg, orgs, fallback };
 }
@@ -43,7 +46,7 @@ export function resolve(query: string, cfg: Config): string {
 
 /**
  * Recognised forms:
- *   org/repo          → repo
+ *   org/repo          → repo (org may be an alias from ORGS)
  *   org/repo/<path>   → repo subpage (pulls, actions, blob/main/x.ts#L1, …)
  *   org/repo#123      → issue/PR
  *   repo#123          → issue/PR in defaultOrg
@@ -59,7 +62,7 @@ function github(q: string, cfg: Config): string | null {
   const m = TARGET.exec(target);
   if (!m) return null;
   const [, orgInput, repo, path = ""] = m;
-  const org = orgInput === undefined ? cfg.defaultOrg : cfg.orgs.find((o) => sameOrg(o, orgInput));
+  const org = orgInput === undefined ? cfg.defaultOrg : cfg.orgs.get(orgInput.toLowerCase());
   if (!org || !REPO.test(repo)) return null;
 
   const base = `https://github.com/${org}/${repo}`;
@@ -67,8 +70,4 @@ function github(q: string, cfg: Config): string | null {
   // A bare word without `#123` is far too ambiguous to hijack.
   if (orgInput === undefined) return null;
   return path ? `${base}/${path}` : base;
-}
-
-function sameOrg(a: string, b: string): boolean {
-  return a.toLowerCase() === b.toLowerCase();
 }

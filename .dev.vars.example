@@ -1,0 +1,8 @@
+# Copy to .dev.vars (gitignored). Used by `pnpm dev`; `pnpm secrets` uploads it as Worker secrets.
+
+# Org used for bare `repo#123`.
+DEFAULT_ORG=acme
+# Extra orgs recognised in `org/repo`, comma-separated. `alias=org` makes `alias/repo` work too.
+ORGS=a=acme,rust-lang
+# Where everything else goes. `{q}` is replaced by the URL-encoded query. Defaults to Google.
+FALLBACK=https://www.google.com/search?q={q}

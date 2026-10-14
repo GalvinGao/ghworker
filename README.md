@@ -1,10 +1,10 @@
-# ghjump
+# ghworker
 
 把它设成浏览器的搜索引擎后，地址栏里可以直接这样跳 GitHub：
 
 | 输入 | 跳到 |
 | --- | --- |
-| `org/repo` | `github.com/org/repo` |
+| `org/repo` | `github.com/org/repo`（org 也可以用别名，比如 `a/repo`） |
 | `org/repo/pulls`（任意子路径） | `github.com/org/repo/pulls` |
 | `org/repo#123` | `github.com/org/repo/issues/123`（如果是 PR，GitHub 会自动转过去） |
 | `repo#123` | `github.com/<DEFAULT_ORG>/repo/issues/123` |
@@ -16,10 +16,15 @@
 
 ## 配置
 
-在 `wrangler.jsonc` 的 `vars` 里设置（改完运行 `pnpm cf-typegen` 重新生成类型）：
+配置不进 git：本地写在 `.dev.vars`（已 gitignore），线上存成 Worker secrets。
+
+```sh
+cp .dev.vars.example .dev.vars   # 然后编辑
+pnpm secrets                     # 把 .dev.vars 上传为线上 secrets，改配置后重新跑一次即可，不用重新部署
+```
 
 - `DEFAULT_ORG`：必填，`repo#123` 默认用的 org
-- `ORGS`：其他会被识别的 org，逗号分隔
+- `ORGS`：其他会被识别的 org，逗号分隔；写成 `alias=org` 时，`alias/repo` 也能用
 - `FALLBACK`：其他输入的去处，`{q}` 会被替换成编码后的查询，默认是 Google
 
 ## 开发
@@ -28,7 +33,7 @@
 pnpm install
 pnpm test                                    # 测试解析规则
 pnpm typecheck
-pnpm dev --var DEFAULT_ORG:acme              # 本地跑，然后访问 http://localhost:8787/?q=widgets%23123
+pnpm dev                                     # 本地跑（读 .dev.vars），然后访问 http://localhost:8787/?q=widgets%23123
 pnpm deploy                                  # 部署（首次需要先 pnpm exec wrangler login）
 ```
 
@@ -38,7 +43,7 @@ pnpm deploy                                  # 部署（首次需要先 pnpm exe
 
 设置 → 搜索引擎 → 管理搜索引擎和网站搜索 → 网站搜索旁边点“添加”：
 
-- 网址：`https://ghjump.<你的子域>.workers.dev/?q=%s`
+- 网址：`https://ghworker.<你的子域>.workers.dev/?q=%s`
 
 添加后在它的菜单里选“设为默认”。
 
