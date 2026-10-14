@@ -1,0 +1,54 @@
+# ghjump
+
+把它设成浏览器的搜索引擎后，地址栏里可以直接这样跳 GitHub：
+
+| 输入 | 跳到 |
+| --- | --- |
+| `org/repo` | `github.com/org/repo` |
+| `org/repo/pulls`（任意子路径） | `github.com/org/repo/pulls` |
+| `org/repo#123` | `github.com/org/repo/issues/123`（如果是 PR，GitHub 会自动转过去） |
+| `repo#123` | `github.com/<DEFAULT_ORG>/repo/issues/123` |
+| 其他 | `FALLBACK` 搜索 |
+
+`org/repo` 只认 `ORGS` 里列出的 org，所以 `and/or`、`24/7` 这类正常搜索不会被误跳。
+
+用 Rust 写成 Cloudflare Worker（[workers-rs](https://github.com/cloudflare/workers-rs)）。
+
+## 配置
+
+在 `wrangler.toml` 的 `[vars]` 里设置：
+
+- `DEFAULT_ORG`：必填，`repo#123` 默认用的 org
+- `ORGS`：其他会被识别的 org，逗号分隔
+- `FALLBACK`：其他输入的去处，`{q}` 会被替换成编码后的查询，默认是 Google
+
+## 开发
+
+```sh
+cargo test                                   # 测试解析规则
+npx wrangler dev --var DEFAULT_ORG:acme      # 本地跑，然后访问 http://localhost:8787/?q=widgets%23123
+npx wrangler deploy                          # 部署（首次需要先 npx wrangler login）
+```
+
+需要 `rustup target add wasm32-unknown-unknown`。
+
+## 浏览器接入
+
+### macOS Chrome
+
+设置 → 搜索引擎 → 管理搜索引擎和网站搜索 → 网站搜索旁边点“添加”：
+
+- 网址：`https://ghjump.<你的子域>.workers.dev/?q=%s`
+
+添加后在它的菜单里选“设为默认”。
+
+注意：不要直接访问 `http://<org>/...` 这样的地址。Chrome 记住这个主机名后，再输入 `org/repo` 会被当成网址打开，不再走搜索。
+
+### iOS Safari
+
+Safari 不能自定义默认搜索引擎，需要装一个能把搜索请求重定向到自定义 URL 的 Safari 扩展（App Store 搜 “Customize Search Engine” 这类）。
+
+**要避免重定向死循环。** 如果扩展拦截的是 Google 搜索，而 `FALLBACK` 也是 Google，没匹配上的搜索会一直来回跳。可以二选一：
+
+- Safari 默认引擎设成一个平时不用的（比如 Ecosia、Bing），让扩展只拦截它；`FALLBACK` 保持 Google。
+- 或者 Safari 保持 Google，把 `FALLBACK` 改成别的引擎，比如 `https://duckduckgo.com/?q={q}`。
