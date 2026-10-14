@@ -12,11 +12,11 @@
 
 `org/repo` 只认 `ORGS` 里列出的 org，所以 `and/or`、`24/7` 这类正常搜索不会被误跳。
 
-用 Rust 写成 Cloudflare Worker（[workers-rs](https://github.com/cloudflare/workers-rs)）。
+用 TypeScript 写成 Cloudflare Worker，没有运行时依赖。
 
 ## 配置
 
-在 `wrangler.toml` 的 `[vars]` 里设置：
+在 `wrangler.jsonc` 的 `vars` 里设置（改完运行 `pnpm cf-typegen` 重新生成类型）：
 
 - `DEFAULT_ORG`：必填，`repo#123` 默认用的 org
 - `ORGS`：其他会被识别的 org，逗号分隔
@@ -25,12 +25,12 @@
 ## 开发
 
 ```sh
-cargo test                                   # 测试解析规则
-npx wrangler dev --var DEFAULT_ORG:acme      # 本地跑，然后访问 http://localhost:8787/?q=widgets%23123
-npx wrangler deploy                          # 部署（首次需要先 npx wrangler login）
+pnpm install
+pnpm test                                    # 测试解析规则
+pnpm typecheck
+pnpm dev --var DEFAULT_ORG:acme              # 本地跑，然后访问 http://localhost:8787/?q=widgets%23123
+pnpm deploy                                  # 部署（首次需要先 pnpm exec wrangler login）
 ```
-
-需要 `rustup target add wasm32-unknown-unknown`。
 
 ## 浏览器接入
 
