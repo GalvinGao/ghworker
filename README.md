@@ -34,7 +34,7 @@ pnpm install
 pnpm test                                    # 测试解析规则
 pnpm typecheck
 pnpm dev                                     # 本地跑（读 .dev.vars），然后访问 http://localhost:8787/?q=widgets%23123
-pnpm deploy                                  # 部署（首次需要先 pnpm exec wrangler login）
+pnpm run deploy                              # 部署（首次需要先 pnpm exec wrangler login）
 ```
 
 ## 浏览器接入
