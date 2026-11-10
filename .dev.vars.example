@@ -6,3 +6,5 @@ DEFAULT_ORG=acme
 ORGS=a=acme,rust-lang
 # Where everything else goes. `{q}` is replaced by the URL-encoded query. Defaults to Google.
 FALLBACK=https://www.google.com/search?q={q}
+# Short repo names, `short=repo` comma-separated: `short#123` / `org/short` expand to the full repo name.
+REPO_ALIASES=w=widgets,dc=dynamic-config
