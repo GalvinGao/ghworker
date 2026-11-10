@@ -25,6 +25,7 @@ pnpm secrets                     # 把 .dev.vars 上传为线上 secrets，改�
 
 - `DEFAULT_ORG`：必填，`repo#123` 默认用的 org
 - `ORGS`：其他会被识别的 org，逗号分隔；写成 `alias=org` 时，`alias/repo` 也能用
+- `REPO_ALIASES`：repo 简称，逗号分隔的 `short=repo`；`short#123`、`org/short` 会展开成完整 repo 名（org 仍按上面的规则解析），不认识的简称照旧。格式不对的条目会被跳过并 log 一次
 - `FALLBACK`：其他输入的去处，`{q}` 会被替换成编码后的查询，默认是 Google
 
 ## 开发

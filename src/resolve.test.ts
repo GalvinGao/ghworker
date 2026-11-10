@@ -72,3 +72,32 @@ describe("configFromVars", () => {
     expect(resolve("hi there", c)).toBe("https://duckduckgo.com/?q=hi+there");
   });
 });
+
+describe("repo aliases", () => {
+  const c = configFromVars({
+    DEFAULT_ORG: "acme",
+    ORGS: "a=acme",
+    REPO_ALIASES: "Re=real-repo, dyn=long-config-name, bad, =x, y=, z=a/b",
+  });
+  const q = (x: string) => resolve(x, c);
+
+  it("expands short repo names", () => {
+    expect(q("re#12")).toBe("https://github.com/acme/real-repo/issues/12");
+    expect(q("a/RE")).toBe("https://github.com/acme/real-repo");
+    expect(q("acme/dyn/pulls")).toBe("https://github.com/acme/long-config-name/pulls");
+  });
+
+  it("leaves unknown names and bare aliases alone", () => {
+    expect(q("widgets#1")).toBe("https://github.com/acme/widgets/issues/1");
+    expect(q("re")).toBe("https://www.google.com/search?q=re");
+  });
+
+  it("tolerates unset or invalid REPO_ALIASES", () => {
+    const none = configFromVars({ DEFAULT_ORG: "acme" });
+    expect(none.repoAliases.size).toBe(0);
+    expect([...c.repoAliases]).toEqual([
+      ["re", "real-repo"],
+      ["dyn", "long-config-name"],
+    ]);
+  });
+});
